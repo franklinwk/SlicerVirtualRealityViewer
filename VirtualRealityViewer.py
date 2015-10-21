@@ -97,7 +97,7 @@ class VirtualRealityViewerWidget:
       
       # Initialize ThreeD Widgets
       threeDWidget = slicer.qMRMLThreeDWidget()
-      threeDWidget.setFixedSize(qt.QSize(300, 315))
+      threeDWidget.setFixedSize(qt.QSize(450, 465))
       threeDWidget.setMRMLViewNode(view)
       threeDWidget.setMRMLScene(slicer.mrmlScene)
       threeDWidget.setWindowTitle("SlicerCubeMap - " + face)
@@ -124,7 +124,7 @@ class VirtualRealityViewerWidget:
       
       # Initialize ThreeD Widgets
       threeDWidget = slicer.qMRMLThreeDWidget()
-      threeDWidget.setFixedSize(qt.QSize(300, 315))
+      threeDWidget.setFixedSize(qt.QSize(450, 465))
       threeDWidget.setMRMLViewNode(view)
       threeDWidget.setMRMLScene(slicer.mrmlScene)
       threeDWidget.setWindowTitle("SlicerCubeMap - " + face)
@@ -157,6 +157,7 @@ class VirtualRealityViewerWidget:
     lpzCam = self.cubeFaceThreeDWidgets["lpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lpzCam, x, y, z)
     lpzCam.Yaw(90)
+    #lpzCam.Roll(180)
     
     # Left Eye Back - lnx
     lnxCam = self.cubeFaceThreeDWidgets["lnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
@@ -167,20 +168,19 @@ class VirtualRealityViewerWidget:
     lnzCam = self.cubeFaceThreeDWidgets["lnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lnzCam, x, y, z)
     lnzCam.Yaw(270)
+    #lnzCam.Roll(180)
     
     # Left Eye Top - lpy
     lpyCam = self.cubeFaceThreeDWidgets["lpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lpyCam, x, y, z)
-    lpyCam.SetViewUp(1,0,0)
-    lpyCam.Yaw(90)
-    lpycam.Roll(90)
+    lpyCam.Pitch(90)
     
     # Left Eye Bottom - lny
     lnyCam = self.cubeFaceThreeDWidgets["lny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lnyCam, x, y, z)
     lnyCam.SetViewUp(1,0,0)
     lnyCam.Yaw(270)   
-    lnyCam.Roll(180)
+    lnyCam.Roll(90)
     
     # Right Eye Front - rpx
     rpxCam = self.cubeFaceThreeDWidgets["rpx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
@@ -190,6 +190,7 @@ class VirtualRealityViewerWidget:
     rpzCam = self.cubeFaceThreeDWidgets["rpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rpzCam, x, y, z)
     rpzCam.Yaw(90)
+    #rpzCam.Roll(180)
     
     # Right Eye Back - rnx
     rnxCam = self.cubeFaceThreeDWidgets["rnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
@@ -200,20 +201,19 @@ class VirtualRealityViewerWidget:
     rnzCam = self.cubeFaceThreeDWidgets["rnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rnzCam, x, y, z)
     rnzCam.Yaw(270)
+    #rnzCam.Roll(180)
     
     # Right Eye Top - rpy
     rpyCam = self.cubeFaceThreeDWidgets["rpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rpyCam, x, y, z)
-    rpyCam.SetViewUp(1,0,0)
-    rpyCam.Yaw(90)
-    rpyCam.Roll(90)
+    rpyCam.Pitch(90)
     
     # Right Eye Bottom - rny
     rnyCam = self.cubeFaceThreeDWidgets["rny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rnyCam, x, y, z)
     rnyCam.SetViewUp(1,0,0)
     rnyCam.Yaw(270)   
-    rnyCam.Roll(180)    
+    rnyCam.Roll(90)    
     
   def initializeCubeFaceCamera(self, camera, x, y ,z):
     camera.SetPosition(x, y, z);
