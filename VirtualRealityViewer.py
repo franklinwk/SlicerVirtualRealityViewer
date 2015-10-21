@@ -85,8 +85,8 @@ class VirtualRealityViewerWidget:
     self.rightWidgets.setLayout(rightWidgetsLayout)
   
     # Per cube face per eye
-    leftFaces  = ["lpx", "lpz", "lnx", "lnz", "lpy", "lny"]
-    rightFaces = ["rpx", "rpz", "rnx", "rnz", "rpy", "rny"]
+    leftFaces  = ["lpx", "lnz", "lnx", "lpz", "lpy", "lny"]
+    rightFaces = ["rpx", "rnz", "rnx", "rpz", "rpy", "rny"]
     self.cubeFaceViewNodes = []
     self.cubeFaceThreeDWidgets = {}
     for face in leftFaces:
@@ -97,16 +97,12 @@ class VirtualRealityViewerWidget:
       
       # Initialize ThreeD Widgets
       threeDWidget = slicer.qMRMLThreeDWidget()
-      threeDWidget.setFixedSize(qt.QSize(450, 465))
+      threeDWidget.setFixedSize(qt.QSize(450, 450))
       threeDWidget.setMRMLViewNode(view)
       threeDWidget.setMRMLScene(slicer.mrmlScene)
       threeDWidget.setWindowTitle("SlicerCubeMap - " + face)
+      threeDWidget.children()[1].hide() # Hide widget controller bar; TODO: maybe a bit more robust
       self.cubeFaceThreeDWidgets[face] = threeDWidget
-      
-      # Default blue gradient background does not mesh together
-      # Can manually recreate blue gradient background stretched to 3 cubes
-      threeDWidget.threeDView().setBackgroundColor(qt.Qt.black)
-      threeDWidget.threeDView().setBackgroundColor2(qt.Qt.black)
       
       # Set Stereo settings
       threeDWidget.threeDView().renderWindow().StereoRenderOn()
@@ -124,16 +120,12 @@ class VirtualRealityViewerWidget:
       
       # Initialize ThreeD Widgets
       threeDWidget = slicer.qMRMLThreeDWidget()
-      threeDWidget.setFixedSize(qt.QSize(450, 465))
+      threeDWidget.setFixedSize(qt.QSize(450, 450))
       threeDWidget.setMRMLViewNode(view)
       threeDWidget.setMRMLScene(slicer.mrmlScene)
       threeDWidget.setWindowTitle("SlicerCubeMap - " + face)
+      threeDWidget.children()[1].hide() # Hide widget controller bar; TODO: maybe a bit more robust
       self.cubeFaceThreeDWidgets[face] = threeDWidget
-      
-      # Default blue gradient background does not mesh together
-      # Can manually recreate blue gradient background stretched to 3 cubes
-      threeDWidget.threeDView().setBackgroundColor(qt.Qt.black)
-      threeDWidget.threeDView().setBackgroundColor2(qt.Qt.black)    
     
       # Set Stereo settings
       threeDWidget.threeDView().renderWindow().StereoRenderOn()
@@ -145,6 +137,19 @@ class VirtualRealityViewerWidget:
     
     # Add fiducial location
     
+    
+    # Set background colors depending on face
+    # Front, Left, Right, and Back retain default color gradient
+    # Top and Bottom have opposite sides of the gradient
+    self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
+    self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))
+    self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
+    self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))
+    self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
+    self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
+    self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
+    self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
+    
     # Position and orient cameras for each ThreeD Widget
     x = 0
     y = 0
@@ -153,22 +158,22 @@ class VirtualRealityViewerWidget:
     lpxCam = self.cubeFaceThreeDWidgets["lpx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lpxCam, x, y, z)
     
-    # Left Eye Left - lpz
-    lpzCam = self.cubeFaceThreeDWidgets["lpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(lpzCam, x, y, z)
-    lpzCam.Yaw(90)
-    #lpzCam.Roll(180)
+    # Left Eye Right - lnz
+    lnzCam = self.cubeFaceThreeDWidgets["lnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+    self.initializeCubeFaceCamera(lnzCam, x, y, z)
+    lnzCam.Yaw(270)
+    #lnzCam.Roll(180)
     
     # Left Eye Back - lnx
     lnxCam = self.cubeFaceThreeDWidgets["lnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lnxCam, x, y, z)
     lnxCam.Yaw(180)
     
-    # Left Eye Right - lnz
-    lnzCam = self.cubeFaceThreeDWidgets["lnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(lnzCam, x, y, z)
-    lnzCam.Yaw(270)
-    #lnzCam.Roll(180)
+    # Left Eye Left - lpz
+    lpzCam = self.cubeFaceThreeDWidgets["lpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+    self.initializeCubeFaceCamera(lpzCam, x, y, z)
+    lpzCam.Yaw(90)
+    #lpzCam.Roll(180)
     
     # Left Eye Top - lpy
     lpyCam = self.cubeFaceThreeDWidgets["lpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
@@ -186,22 +191,22 @@ class VirtualRealityViewerWidget:
     rpxCam = self.cubeFaceThreeDWidgets["rpx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rpxCam, x, y, z)
     
-    # Right Eye Left - rpz
-    rpzCam = self.cubeFaceThreeDWidgets["rpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(rpzCam, x, y, z)
-    rpzCam.Yaw(90)
-    #rpzCam.Roll(180)
+    # Right Eye Right - rnz
+    rnzCam = self.cubeFaceThreeDWidgets["rnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+    self.initializeCubeFaceCamera(rnzCam, x, y, z)
+    rnzCam.Yaw(270)
+    #rnzCam.Roll(180)
     
     # Right Eye Back - rnx
     rnxCam = self.cubeFaceThreeDWidgets["rnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rnxCam, x, y, z)
     rnxCam.Yaw(180)
     
-    # Right Eye Right - rnz
-    rnzCam = self.cubeFaceThreeDWidgets["rnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(rnzCam, x, y, z)
-    rnzCam.Yaw(270)
-    #rnzCam.Roll(180)
+    # Right Eye Left - rpz
+    rpzCam = self.cubeFaceThreeDWidgets["rpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+    self.initializeCubeFaceCamera(rpzCam, x, y, z)
+    rpzCam.Yaw(90)
+    #rpzCam.Roll(180)
     
     # Right Eye Top - rpy
     rpyCam = self.cubeFaceThreeDWidgets["rpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
