@@ -54,7 +54,12 @@ class VirtualRealityViewerWidget:
     self.layout.addWidget(self.startRepeatButton)
 
     self.stopRepeatButton = qt.QPushButton("Stop Creating Images")
-    self.layout.addWidget(self.stopRepeatButton)       
+    self.layout.addWidget(self.stopRepeatButton)
+    
+    self.upViewAngleButton = qt.QPushButton("Increase View Angle")
+    self.layout.addWidget(self.upViewAngleButton)
+    self.downViewAngleButton = qt.QPushButton("Decrease View Angle")
+    self.layout.addWidget(self.downViewAngleButton)
     
     self.startButton.connect('clicked(bool)', self.createWindows)
     self.showButton.connect('clicked(bool)', self.showWindows)
@@ -63,6 +68,9 @@ class VirtualRealityViewerWidget:
     self.createButton.connect('clicked(bool)', self.createWindowImages)
     self.startRepeatButton.connect('clicked(bool)', self.startCreatingImages)
     self.stopRepeatButton.connect('clicked(bool)', self.stopCreatingImages)
+    
+    self.upViewAngleButton.connect('clicked(bool)', self.upViewAngle)
+    self.downViewAngleButton.connect('clicked(bool)', self.downViewAngle)
     
     self.timer = qt.QTimer()
     self.timer.timeout.connect(self.createWindowImages)
@@ -89,6 +97,8 @@ class VirtualRealityViewerWidget:
     rightFaces = ["rpx", "rnz", "rnx", "rpz", "rpy", "rny"]
     self.cubeFaceViewNodes = []
     self.cubeFaceThreeDWidgets = {}
+    
+    slicer.mrmlScene.AddNode(slicer.vtkMRMLViewNode()) # There's some wonky behaviour with the first view node created (ViewNode2?), so this terrible thing exists for now
     for face in leftFaces:
       # Initialize View Nodes
       view = slicer.vtkMRMLViewNode()
@@ -164,13 +174,11 @@ class VirtualRealityViewerWidget:
     # Left Eye Front - lpx
     lpxCam = self.cubeFaceThreeDWidgets["lpx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lpxCam, x, y, z)
-    #lpxCam.Roll(180)
     
     # Left Eye Right - lnz
     lnzCam = self.cubeFaceThreeDWidgets["lnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lnzCam, x, y, z)
     lnzCam.Yaw(270)
-    #lnzCam.Roll(180)
     
     # Left Eye Back - lnx
     lnxCam = self.cubeFaceThreeDWidgets["lnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
@@ -186,25 +194,20 @@ class VirtualRealityViewerWidget:
     lpyCam = self.cubeFaceThreeDWidgets["lpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lpyCam, x, y, z)
     lpyCam.Pitch(90)
-    lpyCam.Roll(180)
     
     # Left Eye Bottom - lny
     lnyCam = self.cubeFaceThreeDWidgets["lny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lnyCam, x, y, z)
-    lnyCam.SetViewUp(1,0,0)
-    lnyCam.Yaw(270)   
-    lnyCam.Roll(90)
+    lnyCam.Pitch(-90) 
     
     # Right Eye Front - rpx
     rpxCam = self.cubeFaceThreeDWidgets["rpx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rpxCam, x, y, z)
-    #rpxCam.Roll(180)
     
     # Right Eye Right - rnz
     rnzCam = self.cubeFaceThreeDWidgets["rnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rnzCam, x, y, z)
     rnzCam.Yaw(270)
-    #rnzCam.Roll(180)
     
     # Right Eye Back - rnx
     rnxCam = self.cubeFaceThreeDWidgets["rnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
@@ -215,26 +218,28 @@ class VirtualRealityViewerWidget:
     rpzCam = self.cubeFaceThreeDWidgets["rpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rpzCam, x, y, z)
     rpzCam.Yaw(90)
-    #rpzCam.Roll(180)
     
     # Right Eye Top - rpy
     rpyCam = self.cubeFaceThreeDWidgets["rpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rpyCam, x, y, z)
     rpyCam.Pitch(90)
-    rpyCam.Roll(180)
     
     # Right Eye Bottom - rny
     rnyCam = self.cubeFaceThreeDWidgets["rny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(rnyCam, x, y, z)
-    rnyCam.SetViewUp(1,0,0)
-    rnyCam.Yaw(270)   
-    rnyCam.Roll(90)    
+    rnyCam.Pitch(-90)
+    
+    # Synchronize Lights
+    for face in self.cubeFaceThreeDWidgets:
+      light = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetLights().GetItemAsObject(0)
+      light.SetLightTypeToSceneLight()
+      # Currently no way to change direction of light, focal point modification doesn't work
     
   def initializeCubeFaceCamera(self, camera, x, y ,z):
     camera.SetPosition(x, y, z);
     camera.SetFocalPoint(x, y + 0.01, z);
     camera.SetViewUp(0, 0, 1);
-    camera.UseHorizontalViewAngleOn();
+    #camera.UseHorizontalViewAngleOn();
     camera.SetViewAngle(90);
     camera.SetClippingRange(0.3, 500);    
     
@@ -268,6 +273,18 @@ class VirtualRealityViewerWidget:
     
   def stopCreatingImages(self):
     self.timer.stop()
+    
+  def upViewAngle(self):
+    for face in self.cubeFaceThreeDWidgets:
+      camera = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+      camera.SetEyeAngle(camera.GetEyeAngle() + 2.0)
+      print (camera.GetEyeAngle())
+    
+  def downViewAngle(self):
+    for face in self.cubeFaceThreeDWidgets:
+      camera = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+      camera.SetEyeAngle(camera.GetEyeAngle() - 2.0)
+      print (camera.GetEyeAngle())
 
   
 class VirtualRealityViewerLogic:
