@@ -13,7 +13,7 @@ public class UpdateCubemap : MonoBehaviour {
     void Start() {
         
         // Initialize cubemap texture
-        Texture2D tex = new Texture2D(1800, 300, TextureFormat.RGB24, false);
+        Texture2D tex = new Texture2D(3600, 600, TextureFormat.RGB24, false);
 
         var bytes = System.IO.File.ReadAllBytes(filepath);
         tex.LoadImage(bytes);
@@ -69,9 +69,9 @@ public class UpdateCubemap : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-        if (totalTime*1000 > 1100)
+        if (totalTime*1000 > 500)
         {
-            Texture2D tex = new Texture2D(1800, 300, TextureFormat.RGB24, false);
+            Texture2D tex = new Texture2D(3600, 600, TextureFormat.RGB24, false);
             var bytes = System.IO.File.ReadAllBytes(filepath);
             tex.LoadImage(bytes);
             GetComponent<Renderer>().material.mainTexture = tex;

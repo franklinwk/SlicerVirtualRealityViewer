@@ -31,46 +31,75 @@ class VirtualRealityViewerWidget:
       self.setup()
       self.parent.show()
 
+    self.stereoMode = False
       
   def setup(self):
     # # Instantiate and connect widgets 
+    # ---------------------------- Window Settings -----------------------------
+    initializationCollapsibleButton = ctk.ctkCollapsibleButton()
+    initializationCollapsibleButton.text = "Window Initialization"
+    self.layout.addWidget(initializationCollapsibleButton)    
+    initializationLayout = qt.QFormLayout(initializationCollapsibleButton)
+    
+    self.stereoCheckBox = qt.QCheckBox()
+    initializationLayout.addRow("Stereoscopic mode:", self.stereoCheckBox)        
+    
     self.startButton = qt.QPushButton("Create Windows")
-    self.layout.addWidget(self.startButton)
+    initializationLayout.addRow(self.startButton)
     
     self.showButton = qt.QPushButton("Show Windows")
-    self.layout.addWidget(self.showButton)
+    initializationLayout.addRow(self.showButton)
     
     self.hideButton = qt.QPushButton("Hide Windows")
-    self.layout.addWidget(self.hideButton)
+    initializationLayout.addRow(self.hideButton)
     
-    
-    # ----------------------------
-    
-    
-    self.createButton = qt.QPushButton("Create Image")
-    self.layout.addWidget(self.createButton)
-    
-    self.startRepeatButton = qt.QPushButton("Continually Create Images")
-    self.layout.addWidget(self.startRepeatButton)
-
-    self.stopRepeatButton = qt.QPushButton("Stop Creating Images")
-    self.layout.addWidget(self.stopRepeatButton)
+    # ---------------------------- Stereo Settings -----------------------------
+    stereoCollapsibleButton = ctk.ctkCollapsibleButton()
+    stereoCollapsibleButton.text = "Stereoscopic Settings"
+    self.layout.addWidget(stereoCollapsibleButton)
+    stereoSettingsLayout = qt.QFormLayout(stereoCollapsibleButton)        
     
     self.upViewAngleButton = qt.QPushButton("Increase View Angle")
-    self.layout.addWidget(self.upViewAngleButton)
-    self.downViewAngleButton = qt.QPushButton("Decrease View Angle")
-    self.layout.addWidget(self.downViewAngleButton)
+    stereoSettingsLayout.addWidget(self.upViewAngleButton)
     
+    self.downViewAngleButton = qt.QPushButton("Decrease View Angle")
+    stereoSettingsLayout.addWidget(self.downViewAngleButton)
+    
+    # ---------------------------- Update Settings -----------------------------
+    updatesCollapsibleButton = ctk.ctkCollapsibleButton()
+    updatesCollapsibleButton.text = "Update Settings"
+    self.layout.addWidget(updatesCollapsibleButton)
+    updateSettingsLayout = qt.QFormLayout(updatesCollapsibleButton)
+    
+    self.followNodeSelector = slicer.qMRMLNodeComboBox()
+    self.followNodeSelector.nodeTypes = ["vtkMRMLMarkupsFiducialNode", "vtkMRMLLinearTransformNode"]
+    self.followNodeSelector.selectNodeUponCreation = False
+    self.followNodeSelector.addEnabled = False
+    self.followNodeSelector.showHidden = False
+    self.followNodeSelector.setMRMLScene( slicer.mrmlScene )
+    self.followNodeSelector.setToolTip( "Pick Fiducial Node or Linear Transform to follow" )
+    updateSettingsLayout.addWidget(self.followNodeSelector)
+    
+    self.createButton = qt.QPushButton("Create Image")
+    updateSettingsLayout.addWidget(self.createButton)
+    
+    self.startRepeatButton = qt.QPushButton("Continually Create Images")
+    updateSettingsLayout.addWidget(self.startRepeatButton)
+
+    self.stopRepeatButton = qt.QPushButton("Stop Creating Images")
+    updateSettingsLayout.addWidget(self.stopRepeatButton)
+    
+    # # Connections
     self.startButton.connect('clicked(bool)', self.createWindows)
     self.showButton.connect('clicked(bool)', self.showWindows)
     self.hideButton.connect('clicked(bool)', self.hideWindows)
     
+    self.upViewAngleButton.connect('clicked(bool)', self.upViewAngle)
+    self.downViewAngleButton.connect('clicked(bool)', self.downViewAngle)    
+    
     self.createButton.connect('clicked(bool)', self.createWindowImages)
     self.startRepeatButton.connect('clicked(bool)', self.startCreatingImages)
     self.stopRepeatButton.connect('clicked(bool)', self.stopCreatingImages)
-    
-    self.upViewAngleButton.connect('clicked(bool)', self.upViewAngle)
-    self.downViewAngleButton.connect('clicked(bool)', self.downViewAngle)
     
     self.timer = qt.QTimer()
     self.timer.timeout.connect(self.createWindowImages)
@@ -78,6 +107,8 @@ class VirtualRealityViewerWidget:
     self.layout.addStretch(1)
     
   def createWindows(self):
+    self.stereoMode = self.stereoCheckBox.isChecked()
+  
     # Create widgets to hold windows
     self.leftWidgets = qt.QWidget()
     self.leftWidgets.setWindowTitle("SlicerCubeMap - Left")
@@ -115,50 +146,64 @@ class VirtualRealityViewerWidget:
       self.cubeFaceThreeDWidgets[face] = threeDWidget
       
       # Set Stereo settings
-      threeDWidget.threeDView().renderWindow().StereoRenderOn()
-      threeDWidget.threeDView().renderWindow().SetStereoTypeToLeft()
+      if (self.stereoCheckBox.isChecked()):
+        threeDWidget.threeDView().renderWindow().StereoRenderOn()
+        threeDWidget.threeDView().renderWindow().SetStereoTypeToLeft()
       threeDWidget.threeDView().renderWindow().Render()
       
       # Add to Left eye cubemap widget
       self.leftWidgets.layout().addWidget(threeDWidget)
     
-    for face in rightFaces:
-      # Initialize View Nodes
-      view = slicer.vtkMRMLViewNode()
-      slicer.mrmlScene.AddNode(view)
-      self.cubeFaceViewNodes.append(view)
+    if (self.stereoMode is True):  
+      for face in rightFaces:
+        # Initialize View Nodes
+        view = slicer.vtkMRMLViewNode()
+        slicer.mrmlScene.AddNode(view)
+        self.cubeFaceViewNodes.append(view)
+        
+        # Initialize ThreeD Widgets
+        threeDWidget = slicer.qMRMLThreeDWidget()
+        threeDWidget.setFixedSize(qt.QSize(600, 600))
+        threeDWidget.setMRMLViewNode(view)
+        threeDWidget.setMRMLScene(slicer.mrmlScene)
+        threeDWidget.setWindowTitle("SlicerCubeMap - " + face)
+        threeDWidget.children()[1].hide() # Hide widget controller bar; TODO: maybe a bit more robust
+        self.cubeFaceThreeDWidgets[face] = threeDWidget
       
-      # Initialize ThreeD Widgets
-      threeDWidget = slicer.qMRMLThreeDWidget()
-      threeDWidget.setFixedSize(qt.QSize(600, 600))
-      threeDWidget.setMRMLViewNode(view)
-      threeDWidget.setMRMLScene(slicer.mrmlScene)
-      threeDWidget.setWindowTitle("SlicerCubeMap - " + face)
-      threeDWidget.children()[1].hide() # Hide widget controller bar; TODO: maybe a bit more robust
-      self.cubeFaceThreeDWidgets[face] = threeDWidget
-    
-      # Set Stereo settings
-      threeDWidget.threeDView().renderWindow().StereoRenderOn()
-      threeDWidget.threeDView().renderWindow().SetStereoTypeToRight()
-      threeDWidget.threeDView().renderWindow().Render()
-      
-      # Add to Right eye cubemap widget
-      self.rightWidgets.layout().addWidget(threeDWidget)      
+        # Set Stereo settings
+        threeDWidget.threeDView().renderWindow().StereoRenderOn()
+        threeDWidget.threeDView().renderWindow().SetStereoTypeToRight()
+        threeDWidget.threeDView().renderWindow().Render()
+        
+        # Add to Right eye cubemap widget
+        self.rightWidgets.layout().addWidget(threeDWidget)      
     
     # Add fiducial location
-    
-    
+    position = [0,0,0]
+    if (self.followNodeSelector.currentNode()):
+      followNode = self.followNodeSelector.currentNode()
+      if (followNode.GetClassName() == "vtkMRMLMarkupsFiducialNode"):
+        self.followNodeSelector.currentNode().GetNthFiducialPosition(0, position)
+        self.tag = followNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onSceneModified)
+      elif (followNode.GetClassName() == "vtkMRMLLinearTransformNode"):
+        position[0] = followNode.GetMatrixTransformToParent().GetElement(0,3)
+        position[1] = followNode.GetMatrixTransformToParent().GetElement(1,3)
+        position[2] = followNode.GetMatrixTransformToParent().GetElement(2,3)
+        self.tag = followNode.GetMatrixTransformToParent().AddObserver(vtk.vtkCommand.ModifiedEvent, self.onSceneModified)
+      
     # Set background colors depending on face
     # Front, Left, Right, and Back retain default color gradient
     # Top and Bottom have opposite sides of the gradient
     self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
     self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))
-    self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
-    self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))
     self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
     self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
-    self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
-    self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
+    
+    if (self.stereoMode is True):
+      self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
+      self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))    
+      self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
+      self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
     
     # self.cubeFaceThreeDWidgets["lpx"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.black))
     # self.cubeFaceThreeDWidgets["lnz"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.white))
@@ -167,77 +212,78 @@ class VirtualRealityViewerWidget:
     # self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.blue))
     # self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.yellow))
     
+    self.setCubeFaceCameras(position)
+  
+  def setCubeFaceCameras(self, position):
     # Position and orient cameras for each ThreeD Widget
-    x = 0
-    y = 0
-    z = 0
     # Left Eye Front - lpx
     lpxCam = self.cubeFaceThreeDWidgets["lpx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(lpxCam, x, y, z)
+    self.initializeCubeFaceCamera(lpxCam, position)
     
     # Left Eye Right - lnz
     lnzCam = self.cubeFaceThreeDWidgets["lnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(lnzCam, x, y, z)
+    self.initializeCubeFaceCamera(lnzCam, position)
     lnzCam.Yaw(270)
     
     # Left Eye Back - lnx
     lnxCam = self.cubeFaceThreeDWidgets["lnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(lnxCam, x, y, z)
+    self.initializeCubeFaceCamera(lnxCam, position)
     lnxCam.Yaw(180)
     
     # Left Eye Left - lpz
     lpzCam = self.cubeFaceThreeDWidgets["lpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(lpzCam, x, y, z)
+    self.initializeCubeFaceCamera(lpzCam, position)
     lpzCam.Yaw(90)
     
     # Left Eye Top - lpy
     lpyCam = self.cubeFaceThreeDWidgets["lpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(lpyCam, x, y, z)
+    self.initializeCubeFaceCamera(lpyCam, position)
     lpyCam.Pitch(90)
     
     # Left Eye Bottom - lny
     lnyCam = self.cubeFaceThreeDWidgets["lny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(lnyCam, x, y, z)
+    self.initializeCubeFaceCamera(lnyCam, position)
     lnyCam.Pitch(-90) 
     
-    # Right Eye Front - rpx
-    rpxCam = self.cubeFaceThreeDWidgets["rpx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(rpxCam, x, y, z)
-    
-    # Right Eye Right - rnz
-    rnzCam = self.cubeFaceThreeDWidgets["rnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(rnzCam, x, y, z)
-    rnzCam.Yaw(270)
-    
-    # Right Eye Back - rnx
-    rnxCam = self.cubeFaceThreeDWidgets["rnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(rnxCam, x, y, z)
-    rnxCam.Yaw(180)
+    if (self.stereoMode is True):
+      # Right Eye Front - rpx
+      rpxCam = self.cubeFaceThreeDWidgets["rpx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+      self.initializeCubeFaceCamera(rpxCam, position)
+      
+      # Right Eye Right - rnz
+      rnzCam = self.cubeFaceThreeDWidgets["rnz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+      self.initializeCubeFaceCamera(rnzCam, position)
+      rnzCam.Yaw(270)
+      
+      # Right Eye Back - rnx
+      rnxCam = self.cubeFaceThreeDWidgets["rnx"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+      self.initializeCubeFaceCamera(rnxCam, position)
+      rnxCam.Yaw(180)
 
-    # Right Eye Left - rpz
-    rpzCam = self.cubeFaceThreeDWidgets["rpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(rpzCam, x, y, z)
-    rpzCam.Yaw(90)
-    
-    # Right Eye Top - rpy
-    rpyCam = self.cubeFaceThreeDWidgets["rpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(rpyCam, x, y, z)
-    rpyCam.Pitch(90)
-    
-    # Right Eye Bottom - rny
-    rnyCam = self.cubeFaceThreeDWidgets["rny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
-    self.initializeCubeFaceCamera(rnyCam, x, y, z)
-    rnyCam.Pitch(-90)
+      # Right Eye Left - rpz
+      rpzCam = self.cubeFaceThreeDWidgets["rpz"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+      self.initializeCubeFaceCamera(rpzCam, position)
+      rpzCam.Yaw(90)
+      
+      # Right Eye Top - rpy
+      rpyCam = self.cubeFaceThreeDWidgets["rpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+      self.initializeCubeFaceCamera(rpyCam, position)
+      rpyCam.Pitch(90)
+      
+      # Right Eye Bottom - rny
+      rnyCam = self.cubeFaceThreeDWidgets["rny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
+      self.initializeCubeFaceCamera(rnyCam, position)
+      rnyCam.Pitch(-90)
     
     # Synchronize Lights
     for face in self.cubeFaceThreeDWidgets:
       light = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetLights().GetItemAsObject(0)
       light.SetLightTypeToSceneLight()
-      # Currently no way to change direction of light, focal point modification doesn't work
-    
-  def initializeCubeFaceCamera(self, camera, x, y ,z):
-    camera.SetPosition(x, y, z)
-    camera.SetFocalPoint(x, y + 0.01, z)
+      # Currently no way to change direction of light, focal point modification doesn't work    
+  
+  def initializeCubeFaceCamera(self, camera, position):
+    camera.SetPosition(position[0], position[1], position[2])
+    camera.SetFocalPoint(position[0], position[1] + 0.01, position[2])
     camera.SetViewUp(0, 0, 1)
     camera.UseHorizontalViewAngleOn()
     camera.SetViewAngle(90) # Increase for stereo projection and cut later (TODO)
@@ -247,31 +293,33 @@ class VirtualRealityViewerWidget:
     
   def showWindows(self):
     self.leftWidgets.showNormal()
-    self.rightWidgets.showNormal()
+    if (self.stereoMode is True):
+      self.rightWidgets.showNormal()
     #for face in self.cubeFaceThreeDWidgets:
     #  self.cubeFaceThreeDWidgets[face].showNormal()
       
   def hideWindows(self):
     self.leftWidgets.hide()
-    self.rightWidgets.hide()
+    if (self.stereoMode is True):
+      self.rightWidgets.hide()
     #for face in self.cubeFaceThreeDWidgets:
     #  self.cubeFaceThreeDWidgets[face].hide()
       
-  # Temporary proof of concept implemention:
-  
+  # Temporary proof of concept implementation:
   def createWindowImages(self):
     widgetPixmapL = qt.QPixmap.grabWidget(self.leftWidgets)
     file = qt.QFile("C:/Work/data/left.jpg")
     file.open(qt.QIODevice.WriteOnly)
     widgetPixmapL.save(file, "JPEG", 100)
     
-    widgetPixmapR = qt.QPixmap.grabWidget(self.rightWidgets)
-    fileR = qt.QFile("C:/Work/data/right.jpg")
-    fileR.open(qt.QIODevice.WriteOnly)
-    widgetPixmapR.save(fileR, "JPEG", 100)
+    if (self.stereoMode is True):
+      widgetPixmapR = qt.QPixmap.grabWidget(self.rightWidgets)
+      fileR = qt.QFile("C:/Work/data/right.jpg")
+      fileR.open(qt.QIODevice.WriteOnly)
+      widgetPixmapR.save(fileR, "JPEG", 100)
     
   def startCreatingImages(self):
-    self.timer.start(1000)
+    self.timer.start(500)
     
   def stopCreatingImages(self):
     self.timer.stop()
@@ -292,7 +340,19 @@ class VirtualRealityViewerWidget:
       #camera.SetEyeSeparation(camera.GetEyeSeparation() - 0.01)
       #print (camera.GetEyeSeparation())      
 
-  
+  def onSceneModified(self, caller, eventId):
+    print "modified"
+    position = [0,0,0]
+    followNode = self.followNodeSelector.currentNode()
+    if (followNode.GetClassName() == "vtkMRMLMarkupsFiducialNode"):
+      self.followNodeSelector.currentNode().GetNthFiducialPosition(0, position)
+    elif (followNode.GetClassName() == "vtkMRMLLinearTransformNode"):
+      position[0] = followNode.GetMatrixTransformToParent().GetElement(0,3)
+      position[1] = followNode.GetMatrixTransformToParent().GetElement(1,3)
+      position[2] = followNode.GetMatrixTransformToParent().GetElement(2,3)
+    self.setCubeFaceCameras(position)
+    
+
 class VirtualRealityViewerLogic:
   def __init__(self):
     pass
