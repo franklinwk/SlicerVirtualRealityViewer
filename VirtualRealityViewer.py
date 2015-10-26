@@ -151,21 +151,21 @@ class VirtualRealityViewerWidget:
     # Set background colors depending on face
     # Front, Left, Right, and Back retain default color gradient
     # Top and Bottom have opposite sides of the gradient
-    # self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
-    # self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))
-    # self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
-    # self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))
-    # self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
-    # self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
-    # self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
-    # self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
+    self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
+    self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))
+    self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor(qt.QColor(193, 195, 232))
+    self.cubeFaceThreeDWidgets["rny"].threeDView().setBackgroundColor2(qt.QColor(193, 195, 232))
+    self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
+    self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
+    self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor(qt.QColor(116, 120, 190))
+    self.cubeFaceThreeDWidgets["rpy"].threeDView().setBackgroundColor2(qt.QColor(116, 120, 190))
     
-    self.cubeFaceThreeDWidgets["lpx"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.black))
-    self.cubeFaceThreeDWidgets["lnz"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.white))
-    self.cubeFaceThreeDWidgets["lnx"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.green))
-    self.cubeFaceThreeDWidgets["lpz"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.red))
-    self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.blue))
-    self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.yellow))
+    # self.cubeFaceThreeDWidgets["lpx"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.black))
+    # self.cubeFaceThreeDWidgets["lnz"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.white))
+    # self.cubeFaceThreeDWidgets["lnx"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.green))
+    # self.cubeFaceThreeDWidgets["lpz"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.red))
+    # self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.blue))
+    # self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.yellow))
     
     # Position and orient cameras for each ThreeD Widget
     x = 0
@@ -236,12 +236,14 @@ class VirtualRealityViewerWidget:
       # Currently no way to change direction of light, focal point modification doesn't work
     
   def initializeCubeFaceCamera(self, camera, x, y ,z):
-    camera.SetPosition(x, y, z);
-    camera.SetFocalPoint(x, y + 0.01, z);
-    camera.SetViewUp(0, 0, 1);
-    #camera.UseHorizontalViewAngleOn();
-    camera.SetViewAngle(90);
-    camera.SetClippingRange(0.3, 500);    
+    camera.SetPosition(x, y, z)
+    camera.SetFocalPoint(x, y + 0.01, z)
+    camera.SetViewUp(0, 0, 1)
+    camera.UseHorizontalViewAngleOn()
+    camera.SetViewAngle(90) # Increase for stereo projection and cut later (TODO)
+    camera.SetClippingRange(0.3, 500)
+    camera.SetEyeAngle(0) # Not set up for stereo yet
+    #camera.UseOffAxisProjectionOn()
     
   def showWindows(self):
     self.leftWidgets.showNormal()
@@ -279,12 +281,16 @@ class VirtualRealityViewerWidget:
       camera = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
       camera.SetEyeAngle(camera.GetEyeAngle() + 2.0)
       print (camera.GetEyeAngle())
+      #camera.SetEyeSeparation(camera.GetEyeSeparation() + 0.01)
+      #print (camera.GetEyeSeparation())      
     
   def downViewAngle(self):
     for face in self.cubeFaceThreeDWidgets:
       camera = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
       camera.SetEyeAngle(camera.GetEyeAngle() - 2.0)
       print (camera.GetEyeAngle())
+      #camera.SetEyeSeparation(camera.GetEyeSeparation() - 0.01)
+      #print (camera.GetEyeSeparation())      
 
   
 class VirtualRealityViewerLogic:
