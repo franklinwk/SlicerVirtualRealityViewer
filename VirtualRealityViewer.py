@@ -180,16 +180,16 @@ class VirtualRealityViewerWidget:
     
     # Add fiducial location
     position = [0,0,0]
-    if (self.followNodeSelector.currentNode()):
-      followNode = self.followNodeSelector.currentNode()
+    followNode = self.followNodeSelector.currentNode()
+    if (followNode):
       if (followNode.GetClassName() == "vtkMRMLMarkupsFiducialNode"):
         self.followNodeSelector.currentNode().GetNthFiducialPosition(0, position)
-        self.tag = followNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onSceneModified)
+        self.tag = followNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onNodeModified)
       elif (followNode.GetClassName() == "vtkMRMLLinearTransformNode"):
         position[0] = followNode.GetMatrixTransformToParent().GetElement(0,3)
         position[1] = followNode.GetMatrixTransformToParent().GetElement(1,3)
         position[2] = followNode.GetMatrixTransformToParent().GetElement(2,3)
-        self.tag = followNode.GetMatrixTransformToParent().AddObserver(vtk.vtkCommand.ModifiedEvent, self.onSceneModified)
+        self.tag = followNode.AddObserver(slicer.vtkMRMLTransformableNode.TransformModifiedEvent, self.onNodeModified)
       
     # Set background colors depending on face
     # Front, Left, Right, and Back retain default color gradient
@@ -213,6 +213,7 @@ class VirtualRealityViewerWidget:
     # self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.yellow))
     
     self.setCubeFaceCameras(position)
+    
   
   def setCubeFaceCameras(self, position):
     # Position and orient cameras for each ThreeD Widget
@@ -238,12 +239,14 @@ class VirtualRealityViewerWidget:
     # Left Eye Top - lpy
     lpyCam = self.cubeFaceThreeDWidgets["lpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lpyCam, position)
-    lpyCam.Pitch(90)
+    #lpyCam.SetFocalPoint(position[0], position[1], position[2] + 0.05)
+    lpyCam.Pitch(89.9)
     
     # Left Eye Bottom - lny
     lnyCam = self.cubeFaceThreeDWidgets["lny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lnyCam, position)
-    lnyCam.Pitch(-90) 
+    #lnyCam.SetFocalPoint(position[0], position[1], position[2] - 0.05)
+    lnyCam.Pitch(-89.9) 
     
     if (self.stereoMode is True):
       # Right Eye Front - rpx
@@ -268,17 +271,21 @@ class VirtualRealityViewerWidget:
       # Right Eye Top - rpy
       rpyCam = self.cubeFaceThreeDWidgets["rpy"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
       self.initializeCubeFaceCamera(rpyCam, position)
+      #rpyCam.SetFocalPoint(position[0], position[1], position[2] - 0.05)
       rpyCam.Pitch(90)
       
       # Right Eye Bottom - rny
       rnyCam = self.cubeFaceThreeDWidgets["rny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
       self.initializeCubeFaceCamera(rnyCam, position)
+      #rnyCam.SetFocalPoint(position[0], position[1], position[2] + 0.05)
       rnyCam.Pitch(-90)
+      
     
     # Synchronize Lights
     for face in self.cubeFaceThreeDWidgets:
       light = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetLights().GetItemAsObject(0)
       light.SetLightTypeToSceneLight()
+      light.SetFocalPoint(10,0,0)
       # Currently no way to change direction of light, focal point modification doesn't work    
   
   def initializeCubeFaceCamera(self, camera, position):
@@ -287,7 +294,7 @@ class VirtualRealityViewerWidget:
     camera.SetViewUp(0, 0, 1)
     camera.UseHorizontalViewAngleOn()
     camera.SetViewAngle(90) # Increase for stereo projection and cut later (TODO)
-    camera.SetClippingRange(0.3, 500)
+    camera.SetClippingRange(0.1, 800)
     camera.SetEyeAngle(0) # Not set up for stereo yet
     #camera.UseOffAxisProjectionOn()
     
@@ -340,10 +347,10 @@ class VirtualRealityViewerWidget:
       #camera.SetEyeSeparation(camera.GetEyeSeparation() - 0.01)
       #print (camera.GetEyeSeparation())      
 
-  def onSceneModified(self, caller, eventId):
-    print "modified"
+  def onNodeModified(self, caller, eventId):
+    followNode = caller
     position = [0,0,0]
-    followNode = self.followNodeSelector.currentNode()
+    #followNode = self.followNodeSelector.currentNode()
     if (followNode.GetClassName() == "vtkMRMLMarkupsFiducialNode"):
       self.followNodeSelector.currentNode().GetNthFiducialPosition(0, position)
     elif (followNode.GetClassName() == "vtkMRMLLinearTransformNode"):
