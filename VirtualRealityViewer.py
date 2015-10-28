@@ -32,6 +32,10 @@ class VirtualRealityViewerWidget:
       self.parent.show()
 
     self.stereoMode = False
+    self.followNode = None
+    self.tag = None
+    self.cubeFaceViewNodes = []
+    self.cubeFaceThreeDWidgets = {}    
       
   def setup(self):
     # # Instantiate and connect widgets 
@@ -89,6 +93,33 @@ class VirtualRealityViewerWidget:
     self.stopRepeatButton = qt.QPushButton("Stop Creating Images")
     updateSettingsLayout.addWidget(self.stopRepeatButton)
     
+    # ---------------------------- Lighting Settings -----------------------------
+    lightingCollapsibleButton = ctk.ctkCollapsibleButton()
+    lightingCollapsibleButton.text = "Lighting Settings"
+    self.layout.addWidget(lightingCollapsibleButton)
+    lightingSettingsLayout = qt.QFormLayout(lightingCollapsibleButton)
+    
+    self.lightSliderX = ctk.ctkSliderWidget()
+    self.lightSliderX.maximum = 500
+    self.lightSliderX.minimum = -500
+    self.lightSliderX.value = 0
+    self.lightSliderX.tracking = True
+    lightingSettingsLayout.addRow("X", self.lightSliderX)
+    
+    self.lightSliderY = ctk.ctkSliderWidget()
+    self.lightSliderY.maximum = 500
+    self.lightSliderY.minimum = -500
+    self.lightSliderY.value = -10
+    self.lightSliderY.tracking = True
+    lightingSettingsLayout.addRow("Y", self.lightSliderY)
+
+    self.lightSliderZ = ctk.ctkSliderWidget()
+    self.lightSliderZ.maximum = 500
+    self.lightSliderZ.minimum = -500
+    self.lightSliderZ.value = 0
+    self.lightSliderZ.tracking = True
+    lightingSettingsLayout.addRow("Z", self.lightSliderZ)    
+    
     # # Connections
     self.startButton.connect('clicked(bool)', self.createWindows)
     self.showButton.connect('clicked(bool)', self.showWindows)
@@ -101,6 +132,13 @@ class VirtualRealityViewerWidget:
     self.startRepeatButton.connect('clicked(bool)', self.startCreatingImages)
     self.stopRepeatButton.connect('clicked(bool)', self.stopCreatingImages)
     
+    self.followNodeSelector.connect('currentNodeChanged(bool)', self.setFollowNode)
+    
+    self.lightSliderX.connect('valueChanged(double)', self.onLightSliderChanged)
+    self.lightSliderY.connect('valueChanged(double)', self.onLightSliderChanged)
+    self.lightSliderZ.connect('valueChanged(double)', self.onLightSliderChanged)
+    
+
     self.timer = qt.QTimer()
     self.timer.timeout.connect(self.createWindowImages)
     
@@ -126,8 +164,6 @@ class VirtualRealityViewerWidget:
     # Per cube face per eye
     leftFaces  = ["lpx", "lnz", "lnx", "lpz", "lpy", "lny"]
     rightFaces = ["rpx", "rnz", "rnx", "rpz", "rpy", "rny"]
-    self.cubeFaceViewNodes = []
-    self.cubeFaceThreeDWidgets = {}
     
     slicer.mrmlScene.AddNode(slicer.vtkMRMLViewNode()) # There's some wonky behaviour with the first view node created (ViewNode2?), so this terrible thing exists for now
     for face in leftFaces:
@@ -178,19 +214,6 @@ class VirtualRealityViewerWidget:
         # Add to Right eye cubemap widget
         self.rightWidgets.layout().addWidget(threeDWidget)      
     
-    # Add fiducial location
-    position = [0,0,0]
-    followNode = self.followNodeSelector.currentNode()
-    if (followNode):
-      if (followNode.GetClassName() == "vtkMRMLMarkupsFiducialNode"):
-        self.followNodeSelector.currentNode().GetNthFiducialPosition(0, position)
-        self.tag = followNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onNodeModified)
-      elif (followNode.GetClassName() == "vtkMRMLLinearTransformNode"):
-        position[0] = followNode.GetMatrixTransformToParent().GetElement(0,3)
-        position[1] = followNode.GetMatrixTransformToParent().GetElement(1,3)
-        position[2] = followNode.GetMatrixTransformToParent().GetElement(2,3)
-        self.tag = followNode.AddObserver(slicer.vtkMRMLTransformableNode.TransformModifiedEvent, self.onNodeModified)
-      
     # Set background colors depending on face
     # Front, Left, Right, and Back retain default color gradient
     # Top and Bottom have opposite sides of the gradient
@@ -212,7 +235,8 @@ class VirtualRealityViewerWidget:
     # self.cubeFaceThreeDWidgets["lpy"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.blue))
     # self.cubeFaceThreeDWidgets["lny"].threeDView().setBackgroundColor(qt.QColor(qt.Qt.yellow))
     
-    self.setCubeFaceCameras(position)
+    # Add fiducial location
+    self.setFollowNode()
     
   
   def setCubeFaceCameras(self, position):
@@ -246,7 +270,7 @@ class VirtualRealityViewerWidget:
     lnyCam = self.cubeFaceThreeDWidgets["lny"].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetActiveCamera()
     self.initializeCubeFaceCamera(lnyCam, position)
     #lnyCam.SetFocalPoint(position[0], position[1], position[2] - 0.05)
-    lnyCam.Pitch(-89.9) 
+    lnyCam.Pitch(-89.9)
     
     if (self.stereoMode is True):
       # Right Eye Front - rpx
@@ -279,14 +303,19 @@ class VirtualRealityViewerWidget:
       self.initializeCubeFaceCamera(rnyCam, position)
       #rnyCam.SetFocalPoint(position[0], position[1], position[2] + 0.05)
       rnyCam.Pitch(-90)
-      
     
+    self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().Render()
+    self.setLighting(0, -10, 0)
+
+  def onLightSliderChanged(self, unused):
+    self.setLighting(self.lightSliderX.value, self.lightSliderY.value, self.lightSliderZ.value)
+  
+  def setLighting(self, x, y, z):
     # Synchronize Lights
     for face in self.cubeFaceThreeDWidgets:
       light = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetLights().GetItemAsObject(0)
       light.SetLightTypeToSceneLight()
-      light.SetFocalPoint(10,0,0)
-      # Currently no way to change direction of light, focal point modification doesn't work    
+      light.SetFocalPoint(0,-100,0)
   
   def initializeCubeFaceCamera(self, camera, position):
     camera.SetPosition(position[0], position[1], position[2])
@@ -297,7 +326,40 @@ class VirtualRealityViewerWidget:
     camera.SetClippingRange(0.1, 800)
     camera.SetEyeAngle(0) # Not set up for stereo yet
     #camera.UseOffAxisProjectionOn()
+  
+  def setFollowNode(self):
+    # Remove old observer if one exists
+    if (self.followNode and self.tag):
+      self.followNode.RemoveObserver(self.tag)
     
+    # Get new node and add new observers
+    self.followNode = self.followNodeSelector.currentNode()
+    if (self.followNode):
+      if (self.followNode.GetClassName() == "vtkMRMLLinearTransformNode"):
+        self.updatePositionFromTransform(self.followNode, 0)
+        self.tag = self.followNode.AddObserver(slicer.vtkMRMLTransformableNode.TransformModifiedEvent, self.updatePositionFromTransform)
+      elif (self.followNode.GetClassName() == "vtkMRMLMarkupsFiducialNode"):
+        #self.updatePositionFromFiducial(self.followNode, 0)
+        self.tag = self.followNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.updatePositionFromFiducial)
+        self.followNode.Modified()
+    else:
+      position= [0,0,0]
+      self.setCubeFaceCameras(position)
+    
+  def updatePositionFromTransform(self, followNode, eventId):
+    if (followNode):
+      position = [0,0,0]
+      position[0] = followNode.GetMatrixTransformToParent().GetElement(0,3)
+      position[1] = followNode.GetMatrixTransformToParent().GetElement(1,3)
+      position[2] = followNode.GetMatrixTransformToParent().GetElement(2,3)
+      self.setCubeFaceCameras(position)
+
+  def updatePositionFromFiducial(self, followNode, eventId):
+    if (followNode):
+      position = [0,0,0]
+      followNode.GetNthFiducialPosition(0, position)
+      self.setCubeFaceCameras(position)
+  
   def showWindows(self):
     self.leftWidgets.showNormal()
     if (self.stereoMode is True):
@@ -346,20 +408,7 @@ class VirtualRealityViewerWidget:
       print (camera.GetEyeAngle())
       #camera.SetEyeSeparation(camera.GetEyeSeparation() - 0.01)
       #print (camera.GetEyeSeparation())      
-
-  def onNodeModified(self, caller, eventId):
-    followNode = caller
-    position = [0,0,0]
-    #followNode = self.followNodeSelector.currentNode()
-    if (followNode.GetClassName() == "vtkMRMLMarkupsFiducialNode"):
-      self.followNodeSelector.currentNode().GetNthFiducialPosition(0, position)
-    elif (followNode.GetClassName() == "vtkMRMLLinearTransformNode"):
-      position[0] = followNode.GetMatrixTransformToParent().GetElement(0,3)
-      position[1] = followNode.GetMatrixTransformToParent().GetElement(1,3)
-      position[2] = followNode.GetMatrixTransformToParent().GetElement(2,3)
-    self.setCubeFaceCameras(position)
-    
-
+  
 class VirtualRealityViewerLogic:
   def __init__(self):
     pass
