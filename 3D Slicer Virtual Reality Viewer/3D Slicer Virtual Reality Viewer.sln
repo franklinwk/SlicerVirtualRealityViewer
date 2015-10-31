@@ -1,9 +1,9 @@
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2008
-
-Project("{D0ABE11E-B992-9657-FDD4-A906FF0B275A}") = "3D Slicer Virtual Reality Viewer", "Assembly-CSharp.csproj", "{2824E6F4-80F3-BDFF-986F-01C3BCBE49B6}"
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3D Slicer Virtual Reality Viewer.CSharp", "3D Slicer Virtual Reality Viewer.CSharp.csproj", "{649E6575-118D-60F6-BE22-02239C693279}"
 EndProject
-Project("{D0ABE11E-B992-9657-FDD4-A906FF0B275A}") = "3D Slicer Virtual Reality Viewer", "Assembly-CSharp-Editor.csproj", "{D5712551-84B8-EF31-2C9F-771C26BF9073}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3D Slicer Virtual Reality Viewer.CSharp.Editor", "3D Slicer Virtual Reality Viewer.CSharp.Editor.csproj", "{2A16B170-3530-F822-4104-D1C1574519D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,36 +11,16 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2824E6F4-80F3-BDFF-986F-01C3BCBE49B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2824E6F4-80F3-BDFF-986F-01C3BCBE49B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2824E6F4-80F3-BDFF-986F-01C3BCBE49B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2824E6F4-80F3-BDFF-986F-01C3BCBE49B6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D5712551-84B8-EF31-2C9F-771C26BF9073}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D5712551-84B8-EF31-2C9F-771C26BF9073}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D5712551-84B8-EF31-2C9F-771C26BF9073}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D5712551-84B8-EF31-2C9F-771C26BF9073}.Release|Any CPU.Build.0 = Release|Any CPU
+		{649E6575-118D-60F6-BE22-02239C693279}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{649E6575-118D-60F6-BE22-02239C693279}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{649E6575-118D-60F6-BE22-02239C693279}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{649E6575-118D-60F6-BE22-02239C693279}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A16B170-3530-F822-4104-D1C1574519D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A16B170-3530-F822-4104-D1C1574519D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A16B170-3530-F822-4104-D1C1574519D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A16B170-3530-F822-4104-D1C1574519D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-																																												GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = Assembly-CSharp.csproj
-		Policies = $0
-		$0.TextStylePolicy = $1
-		$1.inheritsSet = null
-		$1.scope = text/x-csharp
-		$0.CSharpFormattingPolicy = $2
-		$2.inheritsSet = Mono
-		$2.inheritsScope = text/x-csharp
-		$2.scope = text/x-csharp
-		$0.TextStylePolicy = $3
-		$3.FileWidth = 120
-		$3.TabWidth = 4
-		$3.IndentWidth = 4
-		$3.EolMarker = Unix
-		$3.inheritsSet = Mono
-		$3.inheritsScope = text/plain
-		$3.scope = text/plain
-	EndGlobalSection
-
 EndGlobal
