@@ -11,6 +11,10 @@ public class OpenIGTLinkHeadPosition : MonoBehaviour {
     public int port = 18944;
     public GameObject OculusTransform;
 
+    private float testX = 0.2f;
+    private float testY = 0.2f;
+    private float testZ = 0.2f;
+
     private float totalTime = 0f;
 
     // Header information:
@@ -79,25 +83,33 @@ public class OpenIGTLinkHeadPosition : MonoBehaviour {
     void Update()
     {
         // Repeat once every 10 seconds
-        if (totalTime * 1000 > 200)
+        if (totalTime * 1000 > 50)
         {
-
+            string xHex;
+            string yHex;
+            string zHex;
             float x = OculusTransform.transform.position.x;
             float y = OculusTransform.transform.position.y;
             float z = OculusTransform.transform.position.z;
-
-            int xVal = BitConverter.ToInt32(BitConverter.GetBytes(BitConverter.DoubleToInt64Bits(Convert.ToDouble(x*10))), 4);
-            string xHex = xVal.ToString("X");
-            int yVal = BitConverter.ToInt32(BitConverter.GetBytes(BitConverter.DoubleToInt64Bits(Convert.ToDouble(y*10))), 4);
-            string yHex = yVal.ToString("X");
-            int zVal = BitConverter.ToInt32(BitConverter.GetBytes(BitConverter.DoubleToInt64Bits(Convert.ToDouble(z*10))), 4);
-            string zHex = zVal.ToString("X");
+            
+            byte[] xBytes = BitConverter.GetBytes(x*10);
+            byte[] yBytes = BitConverter.GetBytes(y*10);
+            byte[] zBytes = BitConverter.GetBytes(z*10);
+            
+            if (BitConverter.IsLittleEndian)
+            {
+              Array.Reverse(xBytes);
+              Array.Reverse(yBytes);
+              Array.Reverse(zBytes);         
+            }
+            xHex = BitConverter.ToString(xBytes).Replace("-","");
+            yHex = BitConverter.ToString(yBytes).Replace("-","");
+            zHex = BitConverter.ToString(zBytes).Replace("-","");
 
             body = bodyHeader + xHex + yHex + zHex;
-            //body = bodyHeader + "400000004000000040000000";
 
             ulong crcULong = crcGenerator.Compute(StringToByteArray(body), 0, 0);
-            CRC = crcULong.ToString("X");
+            CRC = crcULong.ToString("X16");
 
             string hexmsg = hexHeader + CRC + body;
 

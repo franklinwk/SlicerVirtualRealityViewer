@@ -35,7 +35,8 @@ class CubemapGeneratorWidget:
     self.followNode = None
     self.tag = None
     self.cubeFaceViewNodes = []
-    self.cubeFaceThreeDWidgets = {}    
+    self.cubeFaceThreeDWidgets = {}
+    self.lightDirection = [0, -10, 0]
       
   def setup(self):
     # # Instantiate and connect widgets 
@@ -305,18 +306,19 @@ class CubemapGeneratorWidget:
         #rnyCam.SetFocalPoint(position[0], position[1], position[2] + 0.05)
         rnyCam.Pitch(-90)
 
-      self.setLighting(0, -10, 0)
+      self.setLighting(self.lightDirection)
 
   def onLightSliderChanged(self, unused):
-    self.setLighting(self.lightSliderX.value, self.lightSliderY.value, self.lightSliderZ.value)
+    self.lightDirection = [self.lightSliderX.value, self.lightSliderY.value, self.lightSliderZ.value]
+    
   
-  def setLighting(self, x, y, z):
+  def setLighting(self, lightDirection):
     # Synchronize Lights
     for face in self.cubeFaceThreeDWidgets:
       self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().Render()
       light = self.cubeFaceThreeDWidgets[face].threeDView().renderWindow().GetRenderers().GetFirstRenderer().GetLights().GetItemAsObject(0)
       light.SetLightTypeToSceneLight()
-      light.SetFocalPoint(0,-100,0)
+      light.SetFocalPoint(lightDirection[0], lightDirection[1], lightDirection[2])
   
   def initializeCubeFaceCamera(self, camera, position):
     camera.SetPosition(position[0], position[1], position[2])
@@ -350,9 +352,11 @@ class CubemapGeneratorWidget:
   def updatePositionFromTransform(self, followNode, eventId):
     if (followNode):
       position = [0,0,0]
-      position[0] = followNode.GetMatrixTransformToParent().GetElement(0,3)
-      position[1] = followNode.GetMatrixTransformToParent().GetElement(1,3)
-      position[2] = followNode.GetMatrixTransformToParent().GetElement(2,3)
+      matrix = vtk.vtkMatrix4x4()
+      followNode.GetMatrixTransformToParent(matrix)
+      position[0] = matrix.GetElement(0,3)
+      position[1] = matrix.GetElement(1,3)
+      position[2] = matrix.GetElement(2,3)
       self.setCubeFaceCameras(position)
 
   def updatePositionFromFiducial(self, followNode, eventId):

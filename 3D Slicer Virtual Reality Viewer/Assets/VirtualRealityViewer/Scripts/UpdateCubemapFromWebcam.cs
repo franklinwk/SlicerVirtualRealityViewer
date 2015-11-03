@@ -4,12 +4,17 @@ using System.Collections;
 public class UpdateCubemapFromWebcam : MonoBehaviour {
 
 	private WebCamTexture webcamTexture;
-	public string webcamName = "XSplit Broadcaster";
+	public string webcamName = "XSplitBroadcaster";
 
-	// Initialization
-	void Start () {
+    void Awake()
+    {
+        Application.runInBackground = true;
+    }
+
+    // Initialization
+    void Start () {
 		// Resolution of input should be 3600 x 600 or something with the same ratio
-		//WebCamDevice[] devices = WebCamTexture.devices;
+	    //WebCamDevice[] devices = WebCamTexture.devices;
 		webcamTexture = new WebCamTexture (webcamName);
 		webcamTexture.Play ();
 		GetComponent<Renderer> ().material.mainTexture = webcamTexture;
