@@ -10,6 +10,7 @@ public class OpenIGTLinkHeadPosition : MonoBehaviour {
     public string ipString = "127.0.0.1";
     public int port = 18944;
     public GameObject OculusTransform;
+    public int msDelay = 200;
 
     private float testX = 0.2f;
     private float testY = 0.2f;
@@ -83,30 +84,79 @@ public class OpenIGTLinkHeadPosition : MonoBehaviour {
     void Update()
     {
         // Repeat once every 10 seconds
-        if (totalTime * 1000 > 50)
+        if (totalTime * 1000 > msDelay)
         {
-            string xHex;
-            string yHex;
-            string zHex;
-            float x = OculusTransform.transform.position.x;
-            float y = OculusTransform.transform.position.y;
-            float z = OculusTransform.transform.position.z;
-            
-            byte[] xBytes = BitConverter.GetBytes(x*10);
-            byte[] yBytes = BitConverter.GetBytes(y*10);
-            byte[] zBytes = BitConverter.GetBytes(z*10);
-            
+            string m00Hex;
+            string m01Hex;
+            string m02Hex;
+            string m03Hex;
+            string m10Hex;
+            string m11Hex;
+            string m12Hex;
+            string m13Hex;
+            string m20Hex;
+            string m21Hex;
+            string m22Hex;
+            string m23Hex;
+
+            Matrix4x4 matrix = Matrix4x4.TRS(OculusTransform.transform.localPosition, OculusTransform.transform.localRotation, OculusTransform.transform.localScale);
+
+            float m00 = matrix.GetRow(0)[0];
+            byte[] m00Bytes = BitConverter.GetBytes(m00);
+            float m01 = matrix.GetRow(0)[1];
+            byte[] m01Bytes = BitConverter.GetBytes(m01);
+            float m02 = matrix.GetRow(0)[2];
+            byte[] m02Bytes = BitConverter.GetBytes(m02);
+            float m03 = matrix.GetRow(0)[3];
+            byte[] m03Bytes = BitConverter.GetBytes(m03 * 10);
+
+            float m10 = matrix.GetRow(1)[0];
+            byte[] m10Bytes = BitConverter.GetBytes(m10);
+            float m11 = matrix.GetRow(1)[1];
+            byte[] m11Bytes = BitConverter.GetBytes(m11);
+            float m12 = matrix.GetRow(1)[2];
+            byte[] m12Bytes = BitConverter.GetBytes(m12);
+            float m13 = matrix.GetRow(1)[3];
+            byte[] m13Bytes = BitConverter.GetBytes(m13 * 10);
+
+            float m20 = matrix.GetRow(2)[0];
+            byte[] m20Bytes = BitConverter.GetBytes(m20);
+            float m21 = matrix.GetRow(2)[1];
+            byte[] m21Bytes = BitConverter.GetBytes(m21);
+            float m22 = matrix.GetRow(2)[2];
+            byte[] m22Bytes = BitConverter.GetBytes(m22);
+            float m23 = matrix.GetRow(2)[3];
+            byte[] m23Bytes = BitConverter.GetBytes(m23 * 10);
+
             if (BitConverter.IsLittleEndian)
             {
-              Array.Reverse(xBytes);
-              Array.Reverse(yBytes);
-              Array.Reverse(zBytes);         
+                Array.Reverse(m00Bytes);
+                Array.Reverse(m01Bytes);
+                Array.Reverse(m02Bytes);
+                Array.Reverse(m03Bytes);
+                Array.Reverse(m10Bytes);
+                Array.Reverse(m11Bytes);
+                Array.Reverse(m12Bytes);
+                Array.Reverse(m13Bytes);
+                Array.Reverse(m20Bytes);
+                Array.Reverse(m21Bytes);
+                Array.Reverse(m22Bytes);
+                Array.Reverse(m23Bytes);
             }
-            xHex = BitConverter.ToString(xBytes).Replace("-","");
-            yHex = BitConverter.ToString(yBytes).Replace("-","");
-            zHex = BitConverter.ToString(zBytes).Replace("-","");
+            m00Hex = BitConverter.ToString(m00Bytes).Replace("-", "");
+            m01Hex = BitConverter.ToString(m01Bytes).Replace("-", "");
+            m02Hex = BitConverter.ToString(m02Bytes).Replace("-", "");
+            m03Hex = BitConverter.ToString(m03Bytes).Replace("-", "");
+            m10Hex = BitConverter.ToString(m10Bytes).Replace("-", "");
+            m11Hex = BitConverter.ToString(m11Bytes).Replace("-", "");
+            m12Hex = BitConverter.ToString(m12Bytes).Replace("-", "");
+            m13Hex = BitConverter.ToString(m13Bytes).Replace("-", "");
+            m20Hex = BitConverter.ToString(m20Bytes).Replace("-", "");
+            m21Hex = BitConverter.ToString(m21Bytes).Replace("-", "");
+            m22Hex = BitConverter.ToString(m22Bytes).Replace("-", "");
+            m23Hex = BitConverter.ToString(m23Bytes).Replace("-", "");
 
-            body = bodyHeader + xHex + yHex + zHex;
+            body = m00Hex + m10Hex + m20Hex + m01Hex + m11Hex + m21Hex + m02Hex + m12Hex + m22Hex + m03Hex + m13Hex + m23Hex;
 
             ulong crcULong = crcGenerator.Compute(StringToByteArray(body), 0, 0);
             CRC = crcULong.ToString("X16");
@@ -118,7 +168,6 @@ public class OpenIGTLinkHeadPosition : MonoBehaviour {
 
             // Send the data through the socket.
             int bytesSent = sender.Send(msg);
-            print(bytesSent);
 
             // Reset timer
             totalTime = 0f;
