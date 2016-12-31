@@ -5,3 +5,4 @@ Hacky method for viewing 3D Slicer scenes with a VR headset (https://youtu.be/p2
 
 Slicer module produces a cubemap that the Unity scene can capture (using a virtual webcam that isn't included, but software like xsplit works).
 The Unity scene was originally developed to work with the Oculus Rift DK2. It would likely work with other headsets but needs some modification.
+Head position can be received by Slicer via OpenIGTLink.
